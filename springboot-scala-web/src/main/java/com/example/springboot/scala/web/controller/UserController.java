@@ -1,5 +1,7 @@
 package com.example.springboot.scala.web.controller;
 
+import com.example.springboot.scala.web.config.RequestDTO;
+import com.example.springboot.scala.web.config.UserCustomScalaDeserializer;
 import com.example.springboot.scala.web.dto.UserScalaDto;
 import com.example.springboot.scala.web.service.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,14 +20,14 @@ public class UserController {
     UserServiceImpl userService;
 
     @PostMapping
-    public ResponseEntity<UserScalaDto> addUser(@RequestBody UserScalaDto scalObject){
-       UserScalaDto response =  userService.createUser(scalObject);
-       return new ResponseEntity<UserScalaDto>(response,HttpStatus.OK);
+    public ResponseEntity<UserScalaDto> addUser(@RequestDTO(UserScalaDto.class) UserScalaDto scalObject){
+        UserScalaDto response =  userService.createUser(scalObject);
+        return new ResponseEntity<UserScalaDto>(response,HttpStatus.OK);
     }
 
     @GetMapping
     public ResponseEntity<List<UserScalaDto>> allUsers(){
-      return new ResponseEntity<List<UserScalaDto>>(userService.getAllUsers(),HttpStatus.OK);
+        return new ResponseEntity<List<UserScalaDto>>(userService.getAllUsers(),HttpStatus.OK);
     }
 
     @GetMapping("/{userId}")

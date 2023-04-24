@@ -9,15 +9,19 @@ import org.springframework.context.annotation.Configuration;
 
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
     @Autowired
     MappingJackson2HttpMessageConverter defaultOne;
 
-    @Override
+  /*  @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         MappingJackson2HttpMessageConverter jacksonMessageConverter = null;
         for (HttpMessageConverter<?> converter : converters) {
@@ -37,6 +41,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
         module.addDeserializer(UserScalaDto.class, new UserCustomScalaDeserializer());
         module.addDeserializer(EmployeeScalaDto.class,new EmployeeCustomScalaDeserializer());
         objectMapper.registerModule(module);
+    }*/
+
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+        Map<Object,Object> desMap = new HashMap<>();
+        desMap.put(UserScalaDto.class,new UserCustomScalaDeserializer());
+        desMap.put(EmployeeScalaDto.class,new EmployeeCustomScalaDeserializer());
+        argumentResolvers.add(new DTOModelMapper(defaultOne,desMap));
     }
 
 }

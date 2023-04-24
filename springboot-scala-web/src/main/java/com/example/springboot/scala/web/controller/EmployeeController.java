@@ -1,5 +1,6 @@
 package com.example.springboot.scala.web.controller;
 
+import com.example.springboot.scala.web.config.RequestDTO;
 import com.example.springboot.scala.web.dto.EmployeeScalaDto;
 import com.example.springboot.scala.web.service.EmployeeServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,7 @@ public class EmployeeController {
     EmployeeServiceImpl employeeService;
 
     @PostMapping
-    public ResponseEntity<EmployeeScalaDto> addEmployee(@RequestBody EmployeeScalaDto employeeScalaDto) {
+    public ResponseEntity<EmployeeScalaDto> addEmployee(@RequestDTO(EmployeeScalaDto.class) EmployeeScalaDto employeeScalaDto) {
         EmployeeScalaDto response =  employeeService.addEmployee(employeeScalaDto);
         return new ResponseEntity<EmployeeScalaDto>(response, HttpStatus.OK);
     }
