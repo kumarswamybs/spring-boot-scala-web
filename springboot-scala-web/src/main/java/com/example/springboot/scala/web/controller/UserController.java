@@ -1,8 +1,10 @@
 package com.example.springboot.scala.web.controller;
 
-import com.example.springboot.scala.web.config.RequestDTO;
-import com.example.springboot.scala.web.config.UserCustomScalaDeserializer;
+import com.example.springboot.scala.web.config.Deserializer;
+import com.example.springboot.scala.web.config.ResponseBodyDTO;
+import com.example.springboot.scala.web.config.UserCustomScalaSerializer;
 import com.example.springboot.scala.web.dto.UserScalaDto;
+import com.example.springboot.scala.web.entity.User;
 import com.example.springboot.scala.web.service.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,9 +22,10 @@ public class UserController {
     UserServiceImpl userService;
 
     @PostMapping
-    public ResponseEntity<UserScalaDto> addUser(@RequestDTO(UserScalaDto.class) UserScalaDto scalObject){
+    @ResponseBodyDTO(UserScalaDto.class)
+    public UserScalaDto addUser(@Deserializer(UserCustomScalaSerializer.class) UserScalaDto scalObject){
         UserScalaDto response =  userService.createUser(scalObject);
-        return new ResponseEntity<UserScalaDto>(response,HttpStatus.OK);
+        return response;
     }
 
     @GetMapping
