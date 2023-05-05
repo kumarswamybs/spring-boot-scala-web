@@ -1,4 +1,4 @@
-package com.appNgeek.dto_entity_auto_rest_api.convertor.handler;
+package com.example.springboot.scala.web.config;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -51,16 +51,28 @@ public final class ResponseEntityToDTOHandlerMethodArgumentResolver extends Requ
     public void handleReturnValue(Object returnValue, final MethodParameter returnType, final ModelAndViewContainer mavContainer,
                                   final NativeWebRequest webRequest) throws IOException, HttpMediaTypeNotAcceptableException {
 
-        Class<?> responseDTOType = getRequestBodyDTOType(returnType);
-        if (responseDTOType != null) {
-            Class<?> entityType = null;
-            TypeDescriptor returnTypeDescriptor = new TypeDescriptor(returnType);
-            ResolvableType resolvableType = returnTypeDescriptor.getResolvableType();
-            entityType = resolvableType.getRawClass();
-            UserCustomScalaSerializer customSerilization  = (UserCustomScalaSerializer) serializationMap.get(returnType.getParameterType());
-            returnValue = customSerilization.serialize(null,null);
+     //   Class<?> responseDTOType = getRequestBodyDTOType(returnType);
+        ResponseBodyDTO responseBodyDTO = returnType.getMethodAnnotation(ResponseBodyDTO.class);
+        if (responseBodyDTO == null) {
+            responseBodyDTO = returnType.getContainingClass().getAnnotation(ResponseBodyDTO.class);
         }
-        super.handleReturnValue(returnValue, returnType, mavContainer, webRequest);
+
+        // Get the class specified in the @ResponseBodyDTO annotation
+        Class<?> dtoClass = responseBodyDTO.value();
+
+        // Create an instance of the specified class and set the response body
+        try {
+            UserCustomScalaSerializer customSerilization = (UserCustomScalaSerializer)dtoClass.newInstance();
+            returnValue = customSerilization.serialize(returnValue);
+            super.handleReturnValue(returnValue, returnType, mavContainer, webRequest);
+
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+
+
     }
 
     private Class<?> getRequestBodyDTOType(MethodParameter returnType) {

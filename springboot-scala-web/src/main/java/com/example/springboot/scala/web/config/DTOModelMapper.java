@@ -35,22 +35,21 @@ public class DTOModelMapper extends RequestResponseBodyMethodProcessor {
 
      MappingJackson2HttpMessageConverter defaultOne;
 
-     private Map<Object,Object> deserializeMap = new HashMap<>();
+//     private Map<Object,Object> deserializeMap = new HashMap<>();
+//
+//    private Map<Object,Object> serializeMap = new HashMap<>();
+//
+//    private  ApplicationContext applicationContext;
 
-    private Map<Object,Object> serializeMap = new HashMap<>();
-    
-    private  ApplicationContext applicationContext;
+    //private final ConversionService conversionService;
 
-    private final ConversionService conversionService;
-
-    public DTOModelMapper(MappingJackson2HttpMessageConverter converter, Map<Object,Object> map,
-                          Map<Object,Object> serializeMap,ApplicationContext applicationContext) {
+    public DTOModelMapper(MappingJackson2HttpMessageConverter converter) {
         super(Collections.singletonList(new MappingJackson2HttpMessageConverter()));
         this.defaultOne = converter;
-        this.deserializeMap = map;
-        this.serializeMap = serializeMap;
-        this.applicationContext = applicationContext;
-        this.conversionService = this.applicationContext.getBean(ConversionService.class);
+//        this.deserializeMap = map;
+//        this.serializeMap = serializeMap;
+//        this.applicationContext = applicationContext;
+//        this.conversionService = this.applicationContext.getBean(ConversionService.class);
     }
 
     @Override
@@ -61,46 +60,14 @@ public class DTOModelMapper extends RequestResponseBodyMethodProcessor {
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         JsonParser parser = getJsonParser(webRequest);
-       // Object targetClass = getTargetClass(parameter);
-        StdDeserializer customDeserializer = (StdDeserializer) deserializeMap.get(parameter.getParameterType());
-        return  customDeserializer.deserialize(parser,null);
+        Deserializer deserializerAnnotation = parameter.getParameterAnnotation(Deserializer.class);
+        // Get the deserializer class specified in the annotation
+        Class<?> deserializerClass = deserializerAnnotation.value();
+        // Create a new instance of the deserializer using the class
+        StdDeserializer deserializer = (StdDeserializer) deserializerClass.newInstance();
+        return  deserializer.deserialize(parser,null);
     }
 
-    @Override
-    public void handleReturnValue(Object returnValue, final MethodParameter returnType, final ModelAndViewContainer mavContainer,
-                                  final NativeWebRequest webRequest) throws IOException, HttpMediaTypeNotAcceptableException {
-
-        Class<?> responseDTOType = getRequestBodyDTOType(returnType);
-        if (responseDTOType != null) {
-
-            Class<?> entityType = null;
-
-            TypeDescriptor returnTypeDescriptor = new TypeDescriptor(returnType);
-            ResolvableType resolvableType = returnTypeDescriptor.getResolvableType();
-            StdDeserializer customSerializer = (StdDeserializer) serializeMap.get(responseDTOType.getClass());
-            if (resolvableType.hasGenerics()) {
-                entityType = resolvableType.getGenerics()[0].getRawClass();
-                if (TypeDescriptor.valueOf(resolvableType.getRawClass()).isAssignableTo(TypeDescriptor.valueOf(Page.class))) {
-                    TypeDescriptor sourceType = page(Page.class, TypeDescriptor.valueOf(entityType));
-                    TypeDescriptor targetType = page(Page.class, TypeDescriptor.valueOf(responseDTOType));
-                    returnValue = conversionService.convert(returnValue, sourceType, targetType);
-                } else if (returnTypeDescriptor.isCollection()) {
-                    TypeDescriptor sourceType = TypeDescriptor.collection(returnTypeDescriptor.getResolvableType().getRawClass(),
-                            TypeDescriptor.valueOf(entityType));
-                    TypeDescriptor targetType = TypeDescriptor.collection(returnTypeDescriptor.getResolvableType().getRawClass(),
-                            TypeDescriptor.valueOf(responseDTOType));
-                    returnValue = conversionService.convert(returnValue, sourceType, targetType);
-                }
-            } else {
-                entityType = resolvableType.getRawClass();
-                if (conversionService.canConvert(entityType, responseDTOType)) {
-                    returnValue = conversionService.convert(returnValue, responseDTOType);
-                }
-            }
-        }
-
-        super.handleReturnValue(returnValue, returnType, mavContainer, webRequest);
-    }
 
     public static TypeDescriptor page(Class<?> pageType, @Nullable TypeDescriptor elementTypeDescriptor) {
         Assert.notNull(pageType, "Page type must not be null");
@@ -136,6 +103,35 @@ public class DTOModelMapper extends RequestResponseBodyMethodProcessor {
         }
         throw new RuntimeException();
     }
+
+    @Override
+    public void handleReturnValue(Object returnValue, final MethodParameter returnType, final ModelAndViewContainer mavContainer,
+                                  final NativeWebRequest webRequest) throws IOException, HttpMediaTypeNotAcceptableException {
+
+        //   Class<?> responseDTOType = getRequestBodyDTOType(returnType);
+        ResponseBodyDTO responseBodyDTO = returnType.getMethodAnnotation(ResponseBodyDTO.class);
+        if (responseBodyDTO == null) {
+            responseBodyDTO = returnType.getContainingClass().getAnnotation(ResponseBodyDTO.class);
+        }
+
+        // Get the class specified in the @ResponseBodyDTO annotation
+        Class<?> dtoClass = responseBodyDTO.value();
+
+        // Create an instance of the specified class and set the response body
+        try {
+            UserCustomScalaSerializer customSerilization = (UserCustomScalaSerializer)dtoClass.newInstance();
+            returnValue = customSerilization.serialize(returnValue);
+            super.handleReturnValue(returnValue, returnType, mavContainer, webRequest);
+
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+
+
+    }
+
 
     private static class EmptyBodyCheckingHttpInputMessage implements HttpInputMessage {
         private final HttpHeaders headers;

@@ -2,6 +2,7 @@ package com.example.springboot.scala.web.controller;
 
 import com.example.springboot.scala.web.config.Deserializer;
 import com.example.springboot.scala.web.config.ResponseBodyDTO;
+import com.example.springboot.scala.web.config.UserCustomScalaDeserializer;
 import com.example.springboot.scala.web.config.UserCustomScalaSerializer;
 import com.example.springboot.scala.web.dto.UserScalaDto;
 import com.example.springboot.scala.web.entity.User;
@@ -22,9 +23,9 @@ public class UserController {
     UserServiceImpl userService;
 
     @PostMapping
-    @ResponseBodyDTO(UserScalaDto.class)
-    public UserScalaDto addUser(@Deserializer(UserCustomScalaSerializer.class) UserScalaDto scalObject){
-        UserScalaDto response =  userService.createUser(scalObject);
+    @ResponseBodyDTO(UserCustomScalaSerializer.class)
+    public User addUser(@Deserializer(UserCustomScalaDeserializer.class) UserScalaDto scalObject){
+        User response =  userService.createUser(scalObject);
         return response;
     }
 

@@ -19,8 +19,11 @@ class UserServiceImpl
   @Autowired
   var modelMapper:ModelMapper = _;
 
-  def createUser(user: UserScalaDto): UserScalaDto= {
-     return user;
+  def createUser(userScalaDto: UserScalaDto): User = {
+    var user: User = new User();
+    user.firstName = userScalaDto.firstName
+    user.lastName = userScalaDto.lastName;
+    return user;
   }
 
    def getUserById(id: Integer): UserScalaDto = {

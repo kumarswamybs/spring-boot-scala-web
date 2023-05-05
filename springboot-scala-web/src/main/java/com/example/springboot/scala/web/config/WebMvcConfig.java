@@ -1,8 +1,9 @@
 package com.example.springboot.scala.web.config;
 
-import com.appNgeek.dto_entity_auto_rest_api.convertor.handler.ResponseEntityToDTOHandlerMethodArgumentResolver;
+
 import com.example.springboot.scala.web.dto.EmployeeScalaDto;
 import com.example.springboot.scala.web.dto.UserScalaDto;
+import com.example.springboot.scala.web.entity.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,7 +71,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         desMap.put(EmployeeScalaDto.class,new EmployeeCustomScalaDeserializer());
         Map<Object,Object> serMap = new HashMap<>();
         serMap.put(UserScalaDto.class,new UserCustomScalaSerializer());
-        argumentResolvers.add(new DTOModelMapper(defaultOne,desMap,serMap,applicationContext));
+        argumentResolvers.add(new DTOModelMapper(defaultOne));
     }
 
 
@@ -89,10 +90,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 handlersNewList.add(handler);
             } else {
                 Map<Object,Object> serMap = new HashMap<>();
-                serMap.put(UserScalaDto.class,new UserCustomScalaSerializer());
+                serMap.put(User.class,new UserCustomScalaSerializer());
                 List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
                 messageConverters.add(new MappingJackson2HttpMessageConverter());
-                com.appNgeek.dto_entity_auto_rest_api.convertor.handler.ResponseEntityToDTOHandlerMethodArgumentResolver decorator = new ResponseEntityToDTOHandlerMethodArgumentResolver(
+                ResponseEntityToDTOHandlerMethodArgumentResolver decorator = new ResponseEntityToDTOHandlerMethodArgumentResolver(
                         messageConverters, applicationContext,serMap);
                 handlersNewList.add(decorator);
             }
