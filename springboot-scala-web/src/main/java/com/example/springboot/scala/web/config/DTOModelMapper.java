@@ -79,7 +79,7 @@ public class DTOModelMapper extends RequestResponseBodyMethodProcessor {
     }
     private Class<?> getRequestBodyDTOType(MethodParameter returnType) {
         for (Annotation ann : returnType.getMethodAnnotations()) {
-            ResponseBodyDTO responseBodyDTO = AnnotationUtils.getAnnotation(ann, ResponseBodyDTO.class);
+            Serializer responseBodyDTO = AnnotationUtils.getAnnotation(ann, Serializer.class);
             if (responseBodyDTO != null) {
                 return responseBodyDTO.value();
             }
@@ -109,12 +109,12 @@ public class DTOModelMapper extends RequestResponseBodyMethodProcessor {
                                   final NativeWebRequest webRequest) throws IOException, HttpMediaTypeNotAcceptableException {
 
         //   Class<?> responseDTOType = getRequestBodyDTOType(returnType);
-        ResponseBodyDTO responseBodyDTO = returnType.getMethodAnnotation(ResponseBodyDTO.class);
+        Serializer responseBodyDTO = returnType.getMethodAnnotation(Serializer.class);
         if (responseBodyDTO == null) {
-            responseBodyDTO = returnType.getContainingClass().getAnnotation(ResponseBodyDTO.class);
+            responseBodyDTO = returnType.getContainingClass().getAnnotation(Serializer.class);
         }
 
-        // Get the class specified in the @ResponseBodyDTO annotation
+        // Get the class specified in the @Serializer annotation
         Class<?> dtoClass = responseBodyDTO.value();
 
         // Create an instance of the specified class and set the response body

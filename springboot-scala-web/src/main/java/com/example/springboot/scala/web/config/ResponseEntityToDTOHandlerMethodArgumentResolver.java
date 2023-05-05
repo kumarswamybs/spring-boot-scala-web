@@ -5,9 +5,6 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
 
-import com.example.springboot.scala.web.config.ResponseBodyDTO;
-import com.example.springboot.scala.web.config.UserCustomScalaSerializer;
-import com.example.springboot.scala.web.dto.UserScalaDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.MethodParameter;
@@ -43,7 +40,7 @@ public final class ResponseEntityToDTOHandlerMethodArgumentResolver extends Requ
 
     @Override
     public boolean supportsReturnType(MethodParameter returnType) {
-        return (returnType.getMethodAnnotation(ResponseBodyDTO.class) != null || super.supportsReturnType(returnType));
+        return (returnType.getMethodAnnotation(Serializer.class) != null || super.supportsReturnType(returnType));
 
     }
 
@@ -52,12 +49,12 @@ public final class ResponseEntityToDTOHandlerMethodArgumentResolver extends Requ
                                   final NativeWebRequest webRequest) throws IOException, HttpMediaTypeNotAcceptableException {
 
      //   Class<?> responseDTOType = getRequestBodyDTOType(returnType);
-        ResponseBodyDTO responseBodyDTO = returnType.getMethodAnnotation(ResponseBodyDTO.class);
+        Serializer responseBodyDTO = returnType.getMethodAnnotation(Serializer.class);
         if (responseBodyDTO == null) {
-            responseBodyDTO = returnType.getContainingClass().getAnnotation(ResponseBodyDTO.class);
+            responseBodyDTO = returnType.getContainingClass().getAnnotation(Serializer.class);
         }
 
-        // Get the class specified in the @ResponseBodyDTO annotation
+        // Get the class specified in the @Serializer annotation
         Class<?> dtoClass = responseBodyDTO.value();
 
         // Create an instance of the specified class and set the response body
@@ -77,7 +74,7 @@ public final class ResponseEntityToDTOHandlerMethodArgumentResolver extends Requ
 
     private Class<?> getRequestBodyDTOType(MethodParameter returnType) {
         for (Annotation ann : returnType.getMethodAnnotations()) {
-            ResponseBodyDTO responseBodyDTO = AnnotationUtils.getAnnotation(ann, ResponseBodyDTO.class);
+            Serializer responseBodyDTO = AnnotationUtils.getAnnotation(ann, Serializer.class);
             if (responseBodyDTO != null) {
                 return responseBodyDTO.value();
             }
