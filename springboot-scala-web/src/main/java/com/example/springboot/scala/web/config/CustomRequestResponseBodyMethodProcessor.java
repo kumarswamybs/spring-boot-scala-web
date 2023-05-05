@@ -31,11 +31,13 @@ import java.io.PushbackInputStream;
 import java.lang.annotation.Annotation;
 import java.util.*;
 @Component
-public class RequestHandler extends RequestResponseBodyMethodProcessor {
+public class CustomRequestResponseBodyMethodProcessor extends RequestResponseBodyMethodProcessor {
+
 
     private MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter;
 
-    public RequestHandler(MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
+    @Autowired
+    public CustomRequestResponseBodyMethodProcessor(MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
         super(Collections.singletonList(mappingJackson2HttpMessageConverter));
         this.mappingJackson2HttpMessageConverter = mappingJackson2HttpMessageConverter;
     }
@@ -56,6 +58,12 @@ public class RequestHandler extends RequestResponseBodyMethodProcessor {
         return  deserializer.deserialize(parser,null);
     }
 
+
+    @Override
+    public boolean supportsReturnType(MethodParameter returnType) {
+        return (returnType.getMethodAnnotation(Serializer.class) != null || super.supportsReturnType(returnType));
+
+    }
 
     @Override
     public void handleReturnValue(Object returnValue, final MethodParameter returnType, final ModelAndViewContainer mavContainer,
@@ -81,8 +89,6 @@ public class RequestHandler extends RequestResponseBodyMethodProcessor {
             throw new RuntimeException(e);
         }
     }
-
-
 
     public static TypeDescriptor page(Class<?> pageType, @Nullable TypeDescriptor elementTypeDescriptor) {
         Assert.notNull(pageType, "Page type must not be null");
