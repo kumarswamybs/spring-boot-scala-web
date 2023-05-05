@@ -2,11 +2,10 @@ package com.example.springboot.scala.web.config;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpInputMessage;
@@ -14,6 +13,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
@@ -30,26 +30,14 @@ import java.io.InputStream;
 import java.io.PushbackInputStream;
 import java.lang.annotation.Annotation;
 import java.util.*;
+@Component
+public class RequestHandler extends RequestResponseBodyMethodProcessor {
 
-public class DTOModelMapper extends RequestResponseBodyMethodProcessor {
+    private MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter;
 
-     MappingJackson2HttpMessageConverter defaultOne;
-
-//     private Map<Object,Object> deserializeMap = new HashMap<>();
-//
-//    private Map<Object,Object> serializeMap = new HashMap<>();
-//
-//    private  ApplicationContext applicationContext;
-
-    //private final ConversionService conversionService;
-
-    public DTOModelMapper(MappingJackson2HttpMessageConverter converter) {
-        super(Collections.singletonList(new MappingJackson2HttpMessageConverter()));
-        this.defaultOne = converter;
-//        this.deserializeMap = map;
-//        this.serializeMap = serializeMap;
-//        this.applicationContext = applicationContext;
-//        this.conversionService = this.applicationContext.getBean(ConversionService.class);
+    public RequestHandler(MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
+        super(Collections.singletonList(mappingJackson2HttpMessageConverter));
+        this.mappingJackson2HttpMessageConverter = mappingJackson2HttpMessageConverter;
     }
 
     @Override
@@ -67,6 +55,33 @@ public class DTOModelMapper extends RequestResponseBodyMethodProcessor {
         StdDeserializer deserializer = (StdDeserializer) deserializerClass.newInstance();
         return  deserializer.deserialize(parser,null);
     }
+
+
+    @Override
+    public void handleReturnValue(Object returnValue, final MethodParameter returnType, final ModelAndViewContainer mavContainer,
+                                  final NativeWebRequest webRequest) throws IOException, HttpMediaTypeNotAcceptableException {
+
+        Serializer responseBodyDTO = returnType.getMethodAnnotation(Serializer.class);
+        if (responseBodyDTO == null) {
+            responseBodyDTO = returnType.getContainingClass().getAnnotation(Serializer.class);
+        }
+
+        // Get the class specified in the @Serializer annotation
+        Class<?> dtoClass = responseBodyDTO.value();
+
+        // Create an instance of the specified class and set the response body
+        try {
+            UserCustomScalaSerializer customSerilization = (UserCustomScalaSerializer)dtoClass.newInstance();
+            returnValue = customSerilization.serialize(returnValue);
+            super.handleReturnValue(returnValue, returnType, mavContainer, webRequest);
+
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
 
     public static TypeDescriptor page(Class<?> pageType, @Nullable TypeDescriptor elementTypeDescriptor) {
@@ -91,7 +106,7 @@ public class DTOModelMapper extends RequestResponseBodyMethodProcessor {
         ServletServerHttpRequest inputMessage = new ServletServerHttpRequest(servletRequest);
         EmptyBodyCheckingHttpInputMessage message = new EmptyBodyCheckingHttpInputMessage(inputMessage);
         InputStream inputStream = StreamUtils.nonClosing(message.getBody());
-        return defaultOne.getObjectMapper().getFactory().createParser(inputStream);
+        return mappingJackson2HttpMessageConverter.getObjectMapper().getFactory().createParser(inputStream);
     }
 
     protected Object getTargetClass(MethodParameter parameter) throws IOException, HttpMediaTypeNotSupportedException, HttpMessageNotReadableException {
@@ -102,34 +117,6 @@ public class DTOModelMapper extends RequestResponseBodyMethodProcessor {
             }
         }
         throw new RuntimeException();
-    }
-
-    @Override
-    public void handleReturnValue(Object returnValue, final MethodParameter returnType, final ModelAndViewContainer mavContainer,
-                                  final NativeWebRequest webRequest) throws IOException, HttpMediaTypeNotAcceptableException {
-
-        //   Class<?> responseDTOType = getRequestBodyDTOType(returnType);
-        Serializer responseBodyDTO = returnType.getMethodAnnotation(Serializer.class);
-        if (responseBodyDTO == null) {
-            responseBodyDTO = returnType.getContainingClass().getAnnotation(Serializer.class);
-        }
-
-        // Get the class specified in the @Serializer annotation
-        Class<?> dtoClass = responseBodyDTO.value();
-
-        // Create an instance of the specified class and set the response body
-        try {
-            UserCustomScalaSerializer customSerilization = (UserCustomScalaSerializer)dtoClass.newInstance();
-            returnValue = customSerilization.serialize(returnValue);
-            super.handleReturnValue(returnValue, returnType, mavContainer, webRequest);
-
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-
-
     }
 
 
