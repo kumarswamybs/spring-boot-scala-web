@@ -1,9 +1,9 @@
 package com.example.springboot.scala.web.controller;
 
-import com.example.springboot.scala.web.config.Deserializer;
-import com.example.springboot.scala.web.config.Serializer;
-import com.example.springboot.scala.web.config.UserCustomScalaDeserializer;
-import com.example.springboot.scala.web.config.UserCustomScalaSerializer;
+import com.example.springboot.scala.web.annotations.Deserializer;
+import com.example.springboot.scala.web.annotations.Serializer;
+import com.example.springboot.scala.web.deserializers.UserCustomScalaDeserializer;
+import com.example.springboot.scala.web.serializers.UserCustomScalaSerializer;
 import com.example.springboot.scala.web.dto.UserScalaDto;
 import com.example.springboot.scala.web.entity.User;
 import com.example.springboot.scala.web.service.UserServiceImpl;

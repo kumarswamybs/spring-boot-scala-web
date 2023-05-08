@@ -4,10 +4,12 @@ import scala.beans.BeanProperty
 
 class EmployeeScalaDto {
 
-  def this(email: String, password: String) {
+  def this(firstName:String,lastName:String,email: String, password: String) {
     this();
     this.email = email;
     this.password = password;
+    this.firstName = firstName;
+    this.lastName = lastName;
   }
 
   @BeanProperty

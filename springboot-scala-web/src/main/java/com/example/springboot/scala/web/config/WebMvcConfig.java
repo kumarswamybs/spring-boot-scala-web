@@ -57,15 +57,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
             if (!(handler instanceof RequestResponseBodyMethodProcessor)) {
                 handlersNewList.add(handler);
             } else {
-//                List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
-//                messageConverters.add(new MappingJackson2HttpMessageConverter());
-//                ResponseHandler decorator = new ResponseHandler(
-//                        messageConverters);
                 handlersNewList.add(requestHandler);
             }
-
         }
-
         return handlersNewList;
     }
 

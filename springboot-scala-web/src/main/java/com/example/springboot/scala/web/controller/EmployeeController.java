@@ -1,8 +1,12 @@
 package com.example.springboot.scala.web.controller;
 
-import com.example.springboot.scala.web.config.Deserializer;
-import com.example.springboot.scala.web.dto.EmployeeScalaDto;
+import com.example.springboot.scala.web.annotations.Deserializer;
+import com.example.springboot.scala.web.annotations.Serializer;
+import com.example.springboot.scala.web.deserializers.EmployeeCustomScalaDeserializer;
+import com.example.springboot.scala.web.serializers.EmployeeCustomScalaSerializer;
+import com.example.springboot.scala.web.serializers.UserCustomScalaSerializer;
 import com.example.springboot.scala.web.service.EmployeeServiceImpl;
+import com.example.springboot.scala.web.dto.EmployeeScalaDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +22,9 @@ public class EmployeeController {
     EmployeeServiceImpl employeeService;
 
     @PostMapping
-    public ResponseEntity<EmployeeScalaDto> addEmployee(@Deserializer(EmployeeScalaDto.class) EmployeeScalaDto employeeScalaDto) {
+    @Serializer(EmployeeCustomScalaSerializer.class)
+    public EmployeeScalaDto addEmployee(@Deserializer(EmployeeCustomScalaDeserializer.class) EmployeeScalaDto employeeScalaDto) {
         EmployeeScalaDto response =  employeeService.addEmployee(employeeScalaDto);
-        return new ResponseEntity<EmployeeScalaDto>(response, HttpStatus.OK);
+        return response;
     }
 }

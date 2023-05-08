@@ -1,38 +1,32 @@
 package com.example.springboot.scala.web.config;
 
+import com.example.springboot.scala.web.annotations.Deserializer;
+import com.example.springboot.scala.web.annotations.Serializer;
+import com.example.springboot.scala.web.deserializers.IDesrializer;
+import com.example.springboot.scala.web.serializers.ISerializer;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
-import org.springframework.core.ResolvableType;
-import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpInputMessage;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
-import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor;
-import org.springframework.data.domain.Page;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
-import java.lang.annotation.Annotation;
 import java.util.*;
 @Component
 public class CustomRequestResponseBodyMethodProcessor extends RequestResponseBodyMethodProcessor {
-
 
     private MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter;
 
@@ -54,35 +48,26 @@ public class CustomRequestResponseBodyMethodProcessor extends RequestResponseBod
         // Get the deserializer class specified in the annotation
         Class<?> deserializerClass = deserializerAnnotation.value();
         // Create a new instance of the deserializer using the class
-        StdDeserializer deserializer = (StdDeserializer) deserializerClass.newInstance();
-        return  deserializer.deserialize(parser,null);
+        IDesrializer deserializer = (IDesrializer) deserializerClass.newInstance();
+        return  deserializer.deserialize(parser);
     }
-
 
     @Override
     public boolean supportsReturnType(MethodParameter returnType) {
         return (returnType.getMethodAnnotation(Serializer.class) != null || super.supportsReturnType(returnType));
-
     }
 
     @Override
     public void handleReturnValue(Object returnValue, final MethodParameter returnType, final ModelAndViewContainer mavContainer,
                                   final NativeWebRequest webRequest) throws IOException, HttpMediaTypeNotAcceptableException {
-
-        Serializer responseBodyDTO = returnType.getMethodAnnotation(Serializer.class);
-        if (responseBodyDTO == null) {
-            responseBodyDTO = returnType.getContainingClass().getAnnotation(Serializer.class);
-        }
-
+        Serializer serializerAnnotation = returnType.getMethodAnnotation(Serializer.class);
         // Get the class specified in the @Serializer annotation
-        Class<?> dtoClass = responseBodyDTO.value();
-
-        // Create an instance of the specified class and set the response body
+        Class<?> serializerClass = serializerAnnotation.value();
+        // Create an instance of the specified class
         try {
-            UserCustomScalaSerializer customSerilization = (UserCustomScalaSerializer)dtoClass.newInstance();
-            returnValue = customSerilization.serialize(returnValue);
+            ISerializer customSerializer = (ISerializer)serializerClass.newInstance();
+            returnValue = customSerializer.serialize(returnValue);
             super.handleReturnValue(returnValue, returnType, mavContainer, webRequest);
-
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
         } catch (IllegalAccessException e) {
@@ -90,23 +75,6 @@ public class CustomRequestResponseBodyMethodProcessor extends RequestResponseBod
         }
     }
 
-    public static TypeDescriptor page(Class<?> pageType, @Nullable TypeDescriptor elementTypeDescriptor) {
-        Assert.notNull(pageType, "Page type must not be null");
-        if (!Page.class.isAssignableFrom(pageType)) {
-            throw new IllegalArgumentException("Page type must be a [org.springframework.data.domain.Page]");
-        }
-        ResolvableType element = (elementTypeDescriptor != null ? elementTypeDescriptor.getResolvableType() : null);
-        return new TypeDescriptor(ResolvableType.forClassWithGenerics(pageType, element), null, null);
-    }
-    private Class<?> getRequestBodyDTOType(MethodParameter returnType) {
-        for (Annotation ann : returnType.getMethodAnnotations()) {
-            Serializer responseBodyDTO = AnnotationUtils.getAnnotation(ann, Serializer.class);
-            if (responseBodyDTO != null) {
-                return responseBodyDTO.value();
-            }
-        }
-        return null;
-    }
     public JsonParser getJsonParser(NativeWebRequest webRequest) throws IOException {
         HttpServletRequest servletRequest = webRequest.getNativeRequest(HttpServletRequest.class);
         ServletServerHttpRequest inputMessage = new ServletServerHttpRequest(servletRequest);
@@ -114,17 +82,6 @@ public class CustomRequestResponseBodyMethodProcessor extends RequestResponseBod
         InputStream inputStream = StreamUtils.nonClosing(message.getBody());
         return mappingJackson2HttpMessageConverter.getObjectMapper().getFactory().createParser(inputStream);
     }
-
-    protected Object getTargetClass(MethodParameter parameter) throws IOException, HttpMediaTypeNotSupportedException, HttpMessageNotReadableException {
-        for (Annotation ann : parameter.getParameterAnnotations()) {
-            Deserializer dtoType = AnnotationUtils.getAnnotation(ann, Deserializer.class);
-            if (dtoType != null) {
-                return dtoType.value();
-            }
-        }
-        throw new RuntimeException();
-    }
-
 
     private static class EmptyBodyCheckingHttpInputMessage implements HttpInputMessage {
         private final HttpHeaders headers;
