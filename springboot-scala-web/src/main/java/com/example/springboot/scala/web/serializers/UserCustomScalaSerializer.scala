@@ -1,11 +1,9 @@
 package com.example.springboot.scala.web.serializers
 
-import com.example.springboot.scala.web.dto.UserScalaDto
-import com.example.springboot.scala.web.entity.User
+import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 
 class UserCustomScalaSerializer extends ISerializer {
-  override def serialize(src: Any): Any = {
-    var user: User = src.asInstanceOf[User]
-    return new UserScalaDto(user.getFirstName, user.getLastName);
+  override def serialize(src: Any,objectMapper:ObjectMapper): Any = {
+       return objectMapper.valueToTree(src);
   }
 }

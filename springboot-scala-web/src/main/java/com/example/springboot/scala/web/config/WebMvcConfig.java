@@ -17,29 +17,23 @@ import java.util.List;
 
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
-//    @Autowired
-//    MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter;
-
     @Autowired
     private RequestMappingHandlerAdapter adapter;
 
-
-    private CustomRequestResponseBodyMethodProcessor requestHandler;
-
-
+    private CustomRequestResponseBodyMethodProcessor customRequestResponseBodyMethodProcessor;
 
     private ApplicationContext applicationContext;
 
     @Autowired
-    public WebMvcConfig(ApplicationContext applicationContext, CustomRequestResponseBodyMethodProcessor requestHandler) {
+    public WebMvcConfig(ApplicationContext applicationContext, CustomRequestResponseBodyMethodProcessor customRequestResponseBodyMethodProcessor) {
         this.applicationContext = applicationContext;
-        this.requestHandler = requestHandler;
+        this.customRequestResponseBodyMethodProcessor = customRequestResponseBodyMethodProcessor;
     }
 
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
-       argumentResolvers.add(requestHandler);
+       argumentResolvers.add(customRequestResponseBodyMethodProcessor);
     }
 
 
@@ -57,7 +51,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
             if (!(handler instanceof RequestResponseBodyMethodProcessor)) {
                 handlersNewList.add(handler);
             } else {
-                handlersNewList.add(requestHandler);
+                handlersNewList.add(customRequestResponseBodyMethodProcessor);
             }
         }
         return handlersNewList;

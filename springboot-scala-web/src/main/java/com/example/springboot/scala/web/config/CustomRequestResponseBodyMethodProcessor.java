@@ -5,6 +5,7 @@ import com.example.springboot.scala.web.annotations.Serializer;
 import com.example.springboot.scala.web.deserializers.IDesrializer;
 import com.example.springboot.scala.web.serializers.ISerializer;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
@@ -29,11 +30,13 @@ import java.util.*;
 public class CustomRequestResponseBodyMethodProcessor extends RequestResponseBodyMethodProcessor {
 
     private MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter;
+    private ObjectMapper objectMapper;
 
     @Autowired
-    public CustomRequestResponseBodyMethodProcessor(MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
+    public CustomRequestResponseBodyMethodProcessor(MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter,ObjectMapper objectMapper) {
         super(Collections.singletonList(mappingJackson2HttpMessageConverter));
         this.mappingJackson2HttpMessageConverter = mappingJackson2HttpMessageConverter;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -66,7 +69,7 @@ public class CustomRequestResponseBodyMethodProcessor extends RequestResponseBod
         // Create an instance of the specified class
         try {
             ISerializer customSerializer = (ISerializer)serializerClass.newInstance();
-            returnValue = customSerializer.serialize(returnValue);
+            returnValue = customSerializer.serialize(returnValue,objectMapper);
             super.handleReturnValue(returnValue, returnType, mavContainer, webRequest);
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
